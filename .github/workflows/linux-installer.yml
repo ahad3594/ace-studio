@@ -1,0 +1,22 @@
+name: Build Linux installer
+on:
+  workflow_dispatch:
+jobs:
+  installer:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update && sudo apt-get install -y dpkg-dev xz-utils desktop-file-utils patchelf
+      - run: npm ci && python -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt && npm run build
+      - name: Build self-contained package
+        run: python desktop/build.py --node "$(command -v node)" --python-runtime "$(python -c 'import sys; print(sys.base_prefix)')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ACE-Studio-Linux-x64
+          path: desktop-dist/*.deb

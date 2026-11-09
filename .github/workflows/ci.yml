@@ -1,0 +1,25 @@
+name: Test ACE Studio
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update && sudo apt-get install -y libreoffice-writer libreoffice-calc libreoffice-impress ghostscript fonts-dejavu-core
+      - run: npm ci
+      - run: python -m venv .venv && .venv/bin/python -m pip install -r requirements.lock.txt
+      - run: npm test && npm run test:documents && npm run typecheck && npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          PLAYWRIGHT_SERVER_COMMAND: npm run start
+          ACE_PYTHON: ${{ github.workspace }}/.venv/bin/python
+          ACE_WORKER: ${{ github.workspace }}/worker/documents.py
+          ACE_TESSDATA: ${{ github.workspace }}/data/tessdata

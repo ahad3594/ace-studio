@@ -1,0 +1,10 @@
+import {spawn} from 'node:child_process';
+import {resolve} from 'node:path';
+import nextEnv from '@next/env';
+nextEnv.loadEnvConfig(process.cwd(),true);
+process.env.ACE_PYTHON ||= resolve(process.platform==='win32'?'.venv/Scripts/python.exe':'.venv/bin/python');
+process.env.ACE_WORKER ||= resolve('worker/documents.py');
+process.env.ACE_TESSDATA ||= resolve('data/tessdata');
+const child=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'dev','--hostname','127.0.0.1',...process.argv.slice(2)],{stdio:'inherit',env:process.env});
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>child.kill(signal));
+child.on('error',e=>{console.error(e.message);process.exit(1);});child.on('exit',code=>process.exit(code??0));
