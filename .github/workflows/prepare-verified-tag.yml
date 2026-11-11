@@ -1,0 +1,40 @@
+name: Prepare verified desktop release tag
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/prepare-verified-tag.yml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERIFIED_RUN: '42965590301'
+      VERIFIED_SHA: '1fd5ed734aa912b33eb78cd62f6fe22b000cc131'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate the native checks before creating the tag
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VERIFIED_RUN" --jq .head_sha)" = "$VERIFIED_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VERIFIED_RUN/jobs" > /tmp/ace-verified-jobs.json
+          python3 - <<'PY'
+          import json
+          jobs = json.load(open('/tmp/ace-verified-jobs.json'))['jobs']
+          for target in ('linux-x64','windows-x64','macos-x64','macos-arm64'):
+              matching = [job for job in jobs if job['name'].startswith('build (') and target in job['name']]
+              assert len(matching) == 1 and matching[0]['conclusion'] == 'success', target+' has not passed'
+          PY
+          git fetch --depth=1 origin "$VERIFIED_SHA"
+          version=$(git show "$VERIFIED_SHA:package.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')
+          test "$version" = '2.1.0'
+          tag="v$version"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" > /tmp/ace-verified-tag.json 2>/dev/null; then
+            test "$(python3 -c 'import json; print(json.load(open("/tmp/ace-verified-tag.json"))["object"]["sha"])')" = "$VERIFIED_SHA"
+          else
+            git tag "$tag" "$VERIFIED_SHA"
+            git push origin "refs/tags/$tag"
+          fi

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [package.json, '.github/workflows/desktop-release.yml', 'desktop/**', 'worker/platform_tools.py']
+    paths: [package.json, 'desktop/**', 'worker/platform_tools.py']
     tags: ['v*']
 
 permissions:
@@ -175,7 +175,7 @@ jobs:
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "ACE Studio $VERSION" --notes-file RELEASE_NOTES.md
           fi
-          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq .object.sha)" = "$GITHUB_SHA"
+          test "$(gh release view "$TAG" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
           gh release upload "$TAG" desktop-dist/* --clobber
           gh release view "$TAG" --json assets > /tmp/ace-assets.json
           python3 - <<'PY'
