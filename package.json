@@ -1,6 +1,6 @@
 {
   "name": "ace-studio",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -14,7 +14,7 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "test:core": "node --import tsx --test tests/parser.test.ts tests/processor.test.ts tests/batch.test.ts",
     "test:documents": "node scripts/document-tests.mjs",
-    "setup:documents": "python3 scripts/setup-documents.py",
+    "setup:documents": "node scripts/setup-documents.mjs",
     "desktop:build": "python3 desktop/build.py",
     "test:e2e": "playwright test"
   },

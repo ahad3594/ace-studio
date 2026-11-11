@@ -4,7 +4,7 @@ import { readFile, stat, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {resolve} from 'node:path';
-process.env.ACE_PYTHON ||= resolve('.venv/bin/python');
+process.env.ACE_PYTHON ||= resolve(process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python');
 import JSZip from "jszip";
 import sharp from "sharp";
 import { POST as documentRoute } from "../app/api/documents/process/route.ts";
@@ -166,7 +166,9 @@ test("desktop key setup requires its private session and never returns the saved
     const text = await info.text();
     assert.ok(!text.includes("test-key-not-a-real-credential"));
     assert.equal(JSON.parse(text).configured, true);
-    assert.equal((await stat(join(dir, "provider.json"))).mode & 0o777, 0o600);
+    // Windows profiles inherit NTFS ACLs; POSIX mode bits do not express those ACLs.
+    if (process.platform !== "win32")
+      assert.equal((await stat(join(dir, "provider.json"))).mode & 0o777, 0o600);
     const modelChanged = await providerPost(
       new Request("http://localhost/api/config/provider", {
         method: "POST",

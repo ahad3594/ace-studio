@@ -7,6 +7,7 @@ playwright-report/
 *.tsbuildinfo
 *.zip
 .venv/
+.python-runtime/
 .desktop-build/
 desktop-dist/
 *.deb

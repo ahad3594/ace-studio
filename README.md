@@ -2,19 +2,38 @@
 
 **Every file. One workspace.**
 
-[Download for Ubuntu / Linux Mint](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.0.1_amd64.deb) · [All releases](https://github.com/ahad3594/ace-studio/releases) · [Ubuntu installation help](docs/INSTALL_UBUNTU.md) · [Contribute](CONTRIBUTING.md)
+Open-source application under [GNU AGPL v3](LICENSE). Choose your installer:
 
-Open-source application under [GNU AGPL v3](LICENSE). The ready-to-install app supports **Ubuntu 22.04 or newer, Linux Mint 21 or newer, and compatible x86-64 Debian-based systems**. Windows, macOS and ARM installers are not available.
+| Your computer | Download | Help |
+| --- | --- | --- |
+| Windows 10/11, Intel/AMD 64-bit | [Windows setup EXE](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.1.0_windows_x64_setup.exe) | [Windows guide](docs/INSTALL_WINDOWS.md) |
+| Mac with Apple silicon (M-series) | [Apple Silicon DMG](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.1.0_macos_arm64.dmg) | [Mac guide](docs/INSTALL_MACOS.md) |
+| Mac with Intel processor | [Intel Mac DMG](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.1.0_macos_x64.dmg) | [Mac guide](docs/INSTALL_MACOS.md) |
+| Ubuntu 22.04+ / Linux Mint 21+, Intel/AMD 64-bit | [Ubuntu DEB](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.1.0_amd64.deb) | [Ubuntu guide](docs/INSTALL_UBUNTU.md) |
+
+[All releases and checksums](https://github.com/ahad3594/ace-studio/releases) · [Contribute](CONTRIBUTING.md)
+
+Mac builds require macOS 14+. Windows and Mac installers are community builds without a publisher certificate; macOS builds are ad-hoc signed, **not Developer ID signed or notarized**. See the platform guides for the expected OS prompts. No Windows ARM or Linux ARM build is supplied.
 
 ACE Studio is a desktop and web app for PDFs, Office documents and images. You can turn images into a PDF, turn a PDF into an editable Word file, export PDF pages as images, and use many other file tools. It also includes the original image resizing and compression studio.
 
 ACE has its own name, icon and interface. It is not an iLovePDF product and does not use iLovePDF's branding or private software.
 
-## Install the desktop app without using a terminal
+## Install the desktop app
 
-The supplied installer is for **64-bit Ubuntu, Linux Mint and compatible Debian-based Linux systems**. It is not a Windows or macOS installer.
+### Windows
 
-1. [Download `ACE-Studio_2.0.1_amd64.deb`](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.0.1_amd64.deb). On the [Releases page](https://github.com/ahad3594/ace-studio/releases), expand **Assets** and choose the `.deb` file. **Code → Download ZIP** downloads developer source code, not the installer.
+Download the Windows setup `.exe`, open it, and follow the installer. Open **ACE Studio** from the Start Menu or desktop shortcut. The installer is per-user and includes Node.js, Python, the document engine, fonts and OCR data. See the [Windows guide](docs/INSTALL_WINDOWS.md) for optional LibreOffice/Ghostscript installation and OS prompts.
+
+### macOS
+
+Choose the DMG for your Mac's chip, open it, and drag **ACE Studio** into **Applications**. Open it from Applications. Node.js, Python, the document engine, fonts and OCR data are bundled. See the [Mac guide](docs/INSTALL_MACOS.md) for the first launch and optional dependencies.
+
+### Ubuntu / Linux Mint
+
+The `.deb` installer is for **64-bit Ubuntu, Linux Mint and compatible Debian-based Linux systems**.
+
+1. [Download `ACE-Studio_2.1.0_amd64.deb`](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.1.0_amd64.deb). On the [Releases page](https://github.com/ahad3594/ace-studio/releases), expand **Assets** and choose the `.deb` file. **Code → Download ZIP** downloads developer source code, not the installer.
 2. Open **Files → Downloads**, right-click the `.deb` file, and choose **Open With → Software Install / App Center**. Keep an internet connection available for missing system dependencies.
 3. Click **Install**. Your system may ask for your normal administrator password. LibreOffice and Ghostscript are installed as system dependencies if they are missing.
 4. Open your Applications menu, search for **ACE Studio**, and click it.
@@ -24,14 +43,14 @@ The supplied installer is for **64-bit Ubuntu, Linux Mint and compatible Debian-
 If your Ubuntu software installer cannot open local `.deb` files, open a terminal in the folder containing the download and run:
 
 ```bash
-sudo apt install ./ACE-Studio_2.0.1_amd64.deb
+sudo apt install ./ACE-Studio_2.1.0_amd64.deb
 ```
 
 Use `apt install` for a local file so Ubuntu installs required dependencies too. See the [Ubuntu installation guide](docs/INSTALL_UBUNTU.md) for checksums, updates, removal and troubleshooting.
 
-The `.deb`, matching source archive and `SHA256SUMS` are published together in **GitHub Releases**. Large built installers are kept there instead of in the source tree. Releases are built and checked by [the Linux installer workflow](.github/workflows/linux-installer.yml).
+The installers for all four platforms, matching source archive and `SHA256SUMS` are published together in **GitHub Releases**. Large built installers are kept there instead of in the source tree. Releases are built and checked by [the desktop release workflow](.github/workflows/desktop-release.yml).
 
-After installation, you do **not** need to run npm, Python or terminal commands to open the app. The installer includes Node.js, the Python document engine, fonts, the ACE icon and English/German/Urdu OCR data. It needs about 1 GB of free disk space after installation.
+After installation, you do **not** need to run npm, Python or terminal commands to open the app. Desktop installers include Node.js, the Python document engine, fonts, the ACE icon and English/German/Urdu OCR data. It needs about 1 GB of free disk space after installation.
 
 Closing the browser tab leaves the small local service running. To stop it, open **Settings → Stop desktop service**, or right-click ACE Studio in the application menu and choose **Stop ACE Studio**. Click the app icon to open it again. Clicking the icon while ACE is already running opens the same service instead of starting duplicates.
 
@@ -82,7 +101,7 @@ To use the intelligent assistant in the installed desktop app:
 4. Paste your key into the password field. Choose a model that is available to your Google account.
 5. Click **Save & test connection**.
 
-The key is saved in your private local ACE settings, with file permissions that allow only your user account to read it. It is not saved in browser preferences, included in downloads, returned by the settings API, or committed to Git.
+The key is saved in your local per-user ACE profile. Unix systems use owner-only file permissions; Windows uses the user profile's inherited filesystem ACLs. It is not saved in browser preferences, included in downloads, returned by the settings API, or committed to Git.
 
 Gemini receives your instruction, recent conversation, file types and sanitized settings. It can understand flexible wording, follow-up requests, typos, English, Roman Urdu, Urdu and German. Examples:
 
@@ -139,7 +158,7 @@ Default document limits are 20 source files, 25 MB per file, 80 MB per job and 2
 
 ## Run from source
 
-Desktop users can skip this section. Developers need Node.js 22.18+ and Python 3.12+. Install LibreOffice and Ghostscript using your operating system's package manager.
+Desktop users can skip this section. Developers need Node.js 22.18+ and Python 3.12+. Install LibreOffice/Ghostscript using the relevant platform guide. On Windows use `Copy-Item .env.example .env.local` instead of `cp` in the example below.
 
 ```bash
 npm ci
@@ -196,7 +215,7 @@ npm run build
 python3 desktop/build.py --node /path/to/node/bin/node --python-runtime /path/to/python
 ```
 
-The installer is written to `desktop-dist/`. A matching source archive is included in the installed app. The GitHub release workflow can build the same package on an Ubuntu runner. Installer creation has been tested for the supplied Linux x64 build; other operating systems need separate native packages.
+The installer is written to `desktop-dist/`. A matching source archive is included in the installed app. The GitHub release workflow can build the same package on an Ubuntu runner. Windows and macOS builders are in `desktop/build_native.py`. They run on native GitHub runners and use a relocatable managed Python runtime. See [the release guide](docs/RELEASING.md).
 
 ## Docker and server deployment
 

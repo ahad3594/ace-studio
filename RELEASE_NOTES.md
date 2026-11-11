@@ -1,23 +1,26 @@
-# ACE Studio 2.0.1
+# ACE Studio 2.1.0
 
 Open-source PDF, Office and image tools in one local workspace.
 
-## Install on Ubuntu / Linux Mint
+## Choose your installer under Assets
 
-1. Expand **Assets** below and download **ACE-Studio_2.0.1_amd64.deb**.
-2. Open it with Ubuntu **Software Install / App Center** and click **Install**.
-3. Open **ACE Studio** from Applications. No terminal is needed to launch it.
+| Computer | File | Install |
+| --- | --- | --- |
+| Windows 10/11 x64 | `ACE-Studio_2.1.0_windows_x64_setup.exe` | Open setup; launch from Start Menu |
+| Mac Apple Silicon, macOS 14+ | `ACE-Studio_2.1.0_macos_arm64.dmg` | Drag ACE Studio into Applications |
+| Intel Mac, macOS 14+ | `ACE-Studio_2.1.0_macos_x64.dmg` | Drag ACE Studio into Applications |
+| Ubuntu 22.04+ / Linux Mint 21+ x64 | `ACE-Studio_2.1.0_amd64.deb` | Open with Software Install |
 
-If your software center cannot open the file, run this from the download folder:
+On Ubuntu, if your software center cannot open the file, run this from the download folder:
 
 ```bash
-sudo apt install ./ACE-Studio_2.0.1_amd64.deb
+sudo apt install ./ACE-Studio_2.1.0_amd64.deb
 ```
 
-Supports Ubuntu 22.04+, Linux Mint 21+, and compatible x86-64/amd64 Debian-based systems. Internet is needed for missing LibreOffice/Ghostscript dependencies. Windows, macOS and ARM packages are not included.
+All installers bundle Node.js, Python, core document/image tools, fonts and OCR data. Windows/macOS users install optional LibreOffice for Office-to-PDF and Ghostscript for PDF/A separately. Linux installs those as package dependencies. Gemini requires your own key.
 
-**Choose the `.deb` to install the app.** The source ZIP is for developers; `SHA256SUMS` contains checksums. See [the Ubuntu guide](https://github.com/ahad3594/ace-studio/blob/main/docs/INSTALL_UBUNTU.md) for updates, removal and troubleshooting.
+**Choose an installer for your OS, not the developer source ZIP.** `SHA256SUMS` covers every installer and matching source archive. See the [README](https://github.com/ahad3594/ace-studio#readme) for platform guides, updates and troubleshooting.
 
-This release adds public installation instructions, GNU AGPL v3 licensing and automatic packaging. Local tools do not need a key. Conversational Gemini needs each user's own key.
+Windows installers are unsigned. Mac apps are ad-hoc signed, without Apple Developer ID/notarization; the platform guides explain expected first-launch OS prompts. Windows ARM and Linux ARM builds are not included.
 
-The release pipeline checks the application, package installation, headless startup, service reuse and shutdown before publication. A real graphical desktop session and live Gemini calls are separate checks.
+Native runners test the app and document suite on all four platforms, install/copy their packages, and verify relocated runtime startup, actual PDF inspection, service reuse and shutdown before publication. Linux also runs desktop/mobile browser checks. Human GUI/OS-approval flows and live Gemini calls are separate checks.

@@ -49,7 +49,7 @@ def main():
         if (ROOT/filename).exists():shutil.copy2(ROOT/filename,application/filename)
     # Include the complete authored source alongside the native runtime.
     with zipfile.ZipFile(application/'ACE_Studio_Source.zip','w',zipfile.ZIP_DEFLATED) as archive:
-        excluded={'.git','node_modules','.next','.venv','.desktop-build','desktop-dist','test-results','playwright-report','__pycache__'}
+        excluded={'.git','node_modules','.next','.venv','.python-runtime','.desktop-build','desktop-dist','test-results','playwright-report','__pycache__'}
         for file in ROOT.rglob('*'):
             if file.is_file() and not any(part in excluded for part in file.relative_to(ROOT).parts) and not file.name.endswith(('.pyc','.tsbuildinfo','.deb','.tar.gz')) and (not file.name.startswith('.env') or file.name=='.env.example'):
                 archive.write(file,'ace-studio/'+str(file.relative_to(ROOT)))

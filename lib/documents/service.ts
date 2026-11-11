@@ -65,12 +65,21 @@ export async function runWorker(
   const env: NodeJS.ProcessEnv = {
     NODE_ENV: "production",
     PATH: process.env.PATH,
+    SystemRoot: process.env.SystemRoot || process.env.SYSTEMROOT,
+    WINDIR: process.env.WINDIR,
+    USERPROFILE: process.env.USERPROFILE,
+    HOME: process.env.HOME,
+    LOCALAPPDATA: process.env.LOCALAPPDATA,
+    APPDATA: process.env.APPDATA,
+    ProgramFiles: process.env.ProgramFiles,
+    "ProgramFiles(x86)": process.env["ProgramFiles(x86)"],
     LANG: "C.UTF-8",
     TMPDIR: dir,
     TEMP: dir,
     OPENBLAS_NUM_THREADS: "1",
     OMP_NUM_THREADS: "1",
     PYTHONDONTWRITEBYTECODE: "1",
+    PYTHONUTF8: "1",
     ACE_MAX_PAGES: String(docLimits.pages),
     ACE_TESSDATA:
       process.env.ACE_TESSDATA || join(process.cwd(), "data/tessdata"),
@@ -86,6 +95,7 @@ export async function runWorker(
         env,
         stdio: ["ignore", "pipe", "pipe"],
         detached: process.platform !== "win32",
+        windowsHide: true,
       },
     );
     let stdout = "",
@@ -95,7 +105,12 @@ export async function runWorker(
       try {
         if (child.pid && process.platform !== "win32")
           process.kill(-child.pid, "SIGKILL");
-        else child.kill("SIGKILL");
+        else if (child.pid) {
+          const killer = spawn("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
+            stdio: "ignore", windowsHide: true,
+          });
+          killer.on("error", () => child.kill("SIGKILL"));
+        }
       } catch {}
     };
     const finish = (error?: Error, data?: WorkerResult) => {

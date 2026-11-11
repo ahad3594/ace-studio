@@ -1,0 +1,176 @@
+name: Build and publish desktop installers
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [package.json]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      number: ${{ steps.version.outputs.number }}
+      tag: ${{ steps.version.outputs.tag }}
+      build: ${{ steps.version.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Identify and protect the release version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./package.json").version')
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          tag="v$version"
+          if [[ "$GITHUB_REF_TYPE" == tag && "$GITHUB_REF_NAME" != "$tag" ]]; then
+            echo 'Tag and package.json versions differ.' >&2
+            exit 1
+          fi
+          echo "number=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" --json isDraft > /tmp/ace-release.json 2>/dev/null; then
+            if [[ $(python3 -c 'import json; print(json.load(open("/tmp/ace-release.json"))["isDraft"])') == False ]]; then
+              echo 'This version is already published. Bump the version for changes.'
+              echo 'build=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo 'build=true' >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    if: needs.version.outputs.build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: linux-x64
+            python: .venv/bin/python
+          - os: windows-2022
+            target: windows-x64
+            python: .venv/Scripts/python.exe
+          - os: macos-15-intel
+            target: macos-x64
+            python: .venv/bin/python
+          - os: macos-14
+            target: macos-arm64
+            python: .venv/bin/python
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    env:
+      ACE_PYTHON: ${{ github.workspace }}/${{ matrix.python }}
+      ACE_WORKER: ${{ github.workspace }}/worker/documents.py
+      ACE_TESSDATA: ${{ github.workspace }}/data/tessdata
+      PYTHONUTF8: '1'
+      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.python-runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: '3.12'
+          activate-environment: true
+      - name: Install Linux system tools
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev xz-utils desktop-file-utils patchelf libreoffice-writer libreoffice-calc libreoffice-impress ghostscript fonts-dejavu-core xdg-utils
+      - name: Install Windows system tools
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install libreoffice-fresh ghostscript innosetup -y --no-progress --limit-output
+          if ($LASTEXITCODE -notin @(0, 3010)) { throw 'System dependency installation failed.' }
+      - name: Install macOS system tools
+        if: runner.os == 'macOS'
+        run: |
+          brew install ghostscript
+          brew install --cask libreoffice
+      - name: Install pinned application dependencies
+        run: |
+          npm ci
+          uv pip install --python "$ACE_PYTHON" -r requirements.lock.txt
+      - name: Test and build on the native platform
+        run: |
+          python -m unittest discover -s tests -p test_desktop.py -v
+          npm test
+          npm run test:documents
+          npm run typecheck
+          npm run build
+      - name: Check desktop and mobile browser workflows
+        if: runner.os == 'Linux'
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+        env:
+          PLAYWRIGHT_SERVER_COMMAND: npm run start
+      - name: Build, install and test the native installer
+        run: python desktop/build_native.py --verify --node "$(command -v node)" --python-runtime "$(uv python find --managed-python 3.12)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.target }}
+          path: |
+            desktop-dist/*.deb
+            desktop-dist/*.exe
+            desktop-dist/*.dmg
+          if-no-files-found: error
+
+  publish:
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: desktop-dist
+      - name: Add matching source and checksums
+        env:
+          VERSION: ${{ needs.version.outputs.number }}
+        run: |
+          git archive --format=zip --prefix=ace-studio/ --output="desktop-dist/ACE-Studio_${VERSION}_source.zip" HEAD
+          cd desktop-dist
+          sha256sum *.deb *.exe *.dmg *_source.zip > SHA256SUMS
+          sha256sum --check SHA256SUMS
+          test "$(find . -maxdepth 1 -type f | wc -l)" -eq 6
+      - name: Publish all platform installers together
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.number }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "ACE Studio $VERSION" --notes-file RELEASE_NOTES.md
+          fi
+          gh release upload "$TAG" desktop-dist/* --clobber
+          gh release view "$TAG" --json assets > /tmp/ace-assets.json
+          python3 - <<'PY'
+          import json, os
+          version = os.environ['VERSION']
+          required = {f'ACE-Studio_{version}_{suffix}' for suffix in ('amd64.deb','windows_x64_setup.exe','macos_x64.dmg','macos_arm64.dmg','source.zip')} | {'SHA256SUMS'}
+          uploaded = {asset['name'] for asset in json.load(open('/tmp/ace-assets.json'))['assets'] if asset['size'] > 0}
+          assert required <= uploaded, 'Release assets missing'
+          PY
+          gh release edit "$TAG" --draft=false --latest --notes-file RELEASE_NOTES.md
+          gh release view "$TAG" --json url,isDraft,assets

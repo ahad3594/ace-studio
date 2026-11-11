@@ -10,7 +10,7 @@ The installer is for `amd64` / `x86_64`. ARM, Windows and macOS packages are not
 
 ## Download and install
 
-1. [Download ACE-Studio_2.0.1_amd64.deb](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.0.1_amd64.deb), or visit [Releases](https://github.com/ahad3594/ace-studio/releases) and expand **Assets**.
+1. [Download ACE-Studio_2.1.0_amd64.deb](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.1.0_amd64.deb), or visit [Releases](https://github.com/ahad3594/ace-studio/releases) and expand **Assets**.
 2. Choose the file ending in **`_amd64.deb`**. The source ZIP is for developers; **Code → Download ZIP** does not install ACE Studio.
 3. Open **Files → Downloads**, right-click the `.deb`, and choose **Open With → Software Install / App Center**.
 4. Click **Install** and enter your Ubuntu login password if asked. Ubuntu downloads LibreOffice and Ghostscript if missing.
@@ -24,7 +24,7 @@ You do not need Node.js, Python package commands or a terminal to open the insta
 Open a terminal **in the folder containing the download** (Files → right-click empty space → Open in Terminal) and run:
 
 ```bash
-sudo apt install ./ACE-Studio_2.0.1_amd64.deb
+sudo apt install ./ACE-Studio_2.1.0_amd64.deb
 ```
 
 The `./` means “this file in the current folder.” Use `apt install` so dependencies are installed automatically. Do not rename a source ZIP to `.deb`.

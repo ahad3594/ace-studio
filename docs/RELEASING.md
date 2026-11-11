@@ -1,37 +1,39 @@
-# Publishing an ACE Studio release
+# Publishing desktop releases
 
-GitHub Releases contains installable binaries; the repository contains source and build instructions. Do not add large `.deb` files to Git history.
+The source tree contains the code and native builders. **GitHub Releases** contains installers, matching source and checksums. Built installers are not committed into Git.
 
-## Prepare a version
+## Release steps
 
-1. Update `package.json` and root entries of `package-lock.json` to the same `major.minor.patch` version.
-2. Update installer links/filenames in `README.md`, `docs/INSTALL_UBUNTU.md` and `RELEASE_NOTES.md`. Add a `CHANGELOG.md` entry.
-3. Commit to `main`. A push changing `package.json` starts **Build and publish Linux installer**. Maintainers can also run it manually in Actions, or push a matching `vVERSION` tag.
+1. Bump `package.json` and both root version fields in `package-lock.json` together (`major.minor.patch`).
+2. Update versioned download links in the README, platform installation guides and release notes. Add a changelog entry.
+3. Push to `main`. A change to `package.json` triggers **Build and publish desktop installers**. Manual workflow dispatch and matching `vVERSION` tags are supported too.
+4. Wait for all native jobs and the publish job to succeed. Check every asset under **Releases → Assets** and verify checksums.
 
-An already published version is never overwritten. Bump the version for fixes. If an attempt left a draft release, the workflow can reuse that draft to complete its uploads. A pushed tag must match the package version.
+Published versions are not overwritten. Use a new version for fixes. A failed attempt's draft can be completed on a retry.
 
-## Workflow checks
+## Native build matrix
 
-- Install pinned dependencies and run unit, document, TypeScript, production-build and Chromium browser checks.
-- Build an x86-64 Debian package on Ubuntu 22.04 and validate package metadata and desktop entry.
-- Install on the disposable runner, start the bundled runtime without opening a browser, check the service and shortcut, then stop it.
-- Archive the exact source commit and calculate SHA-256 hashes.
-- Create a draft release, upload all assets, verify their presence, then publish.
+| Runner | Output | Installer check |
+| --- | --- | --- |
+| Ubuntu 22.04 x64 | `_amd64.deb` | Install with apt, then test bundled runtime |
+| Windows Server 2022 x64 | `_windows_x64_setup.exe` | Silent per-user installation, Start Menu shortcut, runtime, uninstall |
+| macOS 15 Intel | `_macos_x64.dmg` | Mount, copy app into a path with spaces, test native entry point |
+| macOS 14 Apple Silicon | `_macos_arm64.dmg` | Same checks on native ARM hardware |
 
-The workflow uses GitHub's repository-scoped job token, with **contents: write** in the release job. No personal access token is needed. Normal CI keeps read-only repository permissions.
+Each job runs launcher tests, unit/API tests, the document suite, TypeScript and the production build. Installed-app checks verify imports from the relocated runtime, actual PDF inspection through the server, authenticated local service reuse and shutdown. Linux also checks desktop/mobile Chromium workflows.
 
-## Required assets
+All four jobs must succeed before a release is published. Publication creates a draft, attaches every installer plus `ACE-Studio_VERSION_source.zip` and `SHA256SUMS`, verifies the asset list, then publishes. Only the publish job has repository **contents: write** permission, using GitHub's job token. No personal access token is needed.
 
-| File | Purpose |
-| --- | --- |
-| `ACE-Studio_VERSION_amd64.deb` | Ubuntu/Linux Mint installer |
-| `ACE-Studio_VERSION_source.zip` | Matching source, license, notices and build instructions |
-| `SHA256SUMS` | Checksums for those files |
+## Building locally
 
-The package also includes `/opt/ace-studio/ACE_Studio_Source.zip`, the application license, notices, and bundled runtime license metadata. GitHub supplies automatic tag source archives too.
+Build on the destination OS with Node.js 22, a relocatable [uv-managed Python 3.12](https://docs.astral.sh/uv/guides/install-python/), and a `.venv` made from that interpreter. Install `requirements.lock.txt`, run `npm ci`, tests and `npm run build`. Windows requires Inno Setup 6; macOS requires Xcode command-line tools. Linux requires the dependencies listed by the workflow.
 
-## Verify publication
+Run `python desktop/build_native.py --node PATH_TO_NODE --python-runtime PATH_TO_MANAGED_PYTHON`. Outputs go to `desktop-dist/`. Add `--verify` **only on a disposable build machine** to install/copy the package and perform native checks; the Windows check also uninstalls its test installation.
 
-Open **Releases → latest → Assets**, download the installer and `SHA256SUMS`, and run `sha256sum --ignore-missing --check SHA256SUMS`. Check that the README download link works. A release is not ready while its assets are missing or its workflow has failed.
+The Python runtime and dependency wheels are built separately for each OS/architecture. Do not copy a Linux virtual environment into a Windows or Mac installer. Every native package includes an authored-source ZIP, license and third-party notices.
 
-Headless checks verify installation and service startup. A human check of Ubuntu's software-center interface and a real desktop session remains separate. Live Gemini requires a user-owned key and is not exercised automatically.
+## Signing status
+
+Windows setup EXEs are unsigned community installers. Mac bundles are ad-hoc signed for executable integrity, without Developer ID certificates or Apple notarization. OS approval prompts are documented in the platform guides. Do not describe these builds as notarized or publisher-verified. A maintainer can add certificate-backed signing in a separate, credential-backed release process.
+
+Headless tests do not exercise a human clicking through SmartScreen, Gatekeeper, Finder or the Windows setup UI, or live Gemini requests.

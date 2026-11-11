@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64, contextlib, difflib, html, io, json, math, os, re, secrets, shutil, subprocess, sys, tempfile, zipfile
 from collections import Counter
 from pathlib import Path
+from platform_tools import office_executable, ghostscript_executable, srgb_profile
 try:
     import pymupdf as fitz
     from PIL import Image, ImageOps, ImageEnhance, ImageChops
@@ -143,7 +144,7 @@ def validate_office(path,extension):
 
 def office_pdf(path,root,extension):
     validate_office(path,extension)
-    exe=os.environ.get('ACE_SOFFICE') or shutil.which('libreoffice') or shutil.which('soffice')
+    exe=office_executable()
     if not exe:raise ValueError('Install LibreOffice to use Word, Excel and PowerPoint conversion.')
     profile=root/('office-profile-'+secrets.token_hex(4));(profile/'user').mkdir(parents=True)
     (profile/'user/registrymodifications.xcu').write_text('<?xml version="1.0"?><oor:items xmlns:oor="http://openoffice.org/2001/registry"><item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item><item oor:path="/org.openoffice.Office.Common/Load"><prop oor:name="UpdateDocMode" oor:op="fuse"><value>0</value></prop></item></oor:items>')
@@ -362,8 +363,8 @@ def process(tool,inputs,o,root,steps=None):
     elif tool=='ocr-pdf':
         need_pdf();shutil.copyfile(ocr_doc(path,o,root),target);warnings.append('OCR creates searchable page images. Recognition and reading order should be reviewed.')
     elif tool=='pdf-to-pdfa':
-        need_pdf();exe=os.environ.get('ACE_GS') or shutil.which('gs');profile=os.environ.get('ACE_SRGB_PROFILE') or '/usr/share/color/icc/ghostscript/srgb.icc'
-        if not exe or not Path(profile).exists():raise ValueError('Ghostscript and an sRGB ICC profile are required for PDF/A export.')
+        need_pdf();exe=ghostscript_executable();profile=srgb_profile(exe)
+        if not exe or not profile:raise ValueError('Ghostscript and an sRGB ICC profile are required for PDF/A export.')
         definition=root/'pdfa.ps';definition.write_text('%!\n/ICCProfile ('+profile.replace('\\','\\\\').replace('(','\\(').replace(')','\\)')+') def\n[/_objdef {icc_PDFA} /type /stream /OBJ pdfmark\n[{icc_PDFA} << /N 3 >> /PUT pdfmark\n[{icc_PDFA} ICCProfile (r) file /PUT pdfmark\n[/_objdef {OutputIntent_PDFA} /type /dict /OBJ pdfmark\n[{OutputIntent_PDFA} << /Type /OutputIntent /S /GTS_PDFA1 /DestOutputProfile {icc_PDFA} /OutputConditionIdentifier (sRGB) >> /PUT pdfmark\n[{Catalog} << /OutputIntents [ {OutputIntent_PDFA} ] >> /PUT pdfmark\n')
         with opened(path,o.get('password','')) as doc:clean=root/'archive-input.pdf';save(doc,clean)
         result=subprocess.run([exe,'-dBATCH','-dNOPAUSE','-dSAFER','-sDEVICE=pdfwrite','-dPDFA=2','-dPDFACompatibilityPolicy=1','-sColorConversionStrategy=RGB','-sProcessColorModel=DeviceRGB','--permit-file-read='+str(Path(profile).parent)+'/*','-sOutputFile='+str(target),str(definition),str(clean)],capture_output=True,timeout=90)
@@ -468,14 +469,16 @@ def process(tool,inputs,o,root,steps=None):
 
 def capabilities():
     tessdata=Path(os.environ.get('ACE_TESSDATA') or Path(__file__).parent.parent/'data/tessdata')
-    return {'engine':True,'office':bool(os.environ.get('ACE_SOFFICE') or shutil.which('libreoffice') or shutil.which('soffice')),'ocr':(tessdata/'eng.traineddata').exists(),'archive':bool(os.environ.get('ACE_GS') or shutil.which('gs')),'version':fitz.VersionBind}
+    gs=ghostscript_executable()
+    return {'engine':True,'office':bool(office_executable()),'ocr':(tessdata/'eng.traineddata').exists(),'archive':bool(gs and srgb_profile(gs)),'version':fitz.VersionBind}
 
 def main():
-    request_path=Path(sys.argv[1]).resolve();root=request_path.parent;job=json.loads(request_path.read_text())
+    request_path=Path(sys.argv[1]).resolve();root=request_path.parent;job=json.loads(request_path.read_text(encoding='utf-8'))
     try:
         import resource
-        resource.setrlimit(resource.RLIMIT_CPU,(170,175));resource.setrlimit(resource.RLIMIT_FSIZE,(120*1024*1024,120*1024*1024));resource.setrlimit(resource.RLIMIT_AS,(3*1024**3,3*1024**3))
-    except (ImportError,ValueError):pass
+        resource.setrlimit(resource.RLIMIT_CPU,(170,175));resource.setrlimit(resource.RLIMIT_FSIZE,(120*1024*1024,120*1024*1024))
+        if sys.platform.startswith('linux'):resource.setrlimit(resource.RLIMIT_AS,(3*1024**3,3*1024**3))
+    except (ImportError,ValueError,OSError):pass
     for item in job.get('inputs',[]):
         file=(root/item['path']).resolve()
         if not file.is_relative_to(root) or not file.is_file():raise ValueError('Invalid private job input.')
