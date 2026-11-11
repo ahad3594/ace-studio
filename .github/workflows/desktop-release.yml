@@ -86,7 +86,10 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: '3.12'
-          activate-environment: true
+      - name: Create the build environment from relocatable Python
+        run: |
+          uv python install 3.12
+          uv venv --python "$(uv python find --system --managed-python 3.12)" .venv
       - name: Install Linux system tools
         if: runner.os == 'Linux'
         run: |
@@ -118,7 +121,7 @@ jobs:
           uv pip install --python "$ACE_PYTHON" -r requirements.lock.txt
       - name: Test and build on the native platform
         run: |
-          python -m unittest discover -s tests -p test_desktop.py -v
+          "$ACE_PYTHON" -m unittest discover -s tests -p test_desktop.py -v
           npm test
           npm run test:documents
           npm run typecheck
@@ -131,7 +134,7 @@ jobs:
         env:
           PLAYWRIGHT_SERVER_COMMAND: npm run start
       - name: Build, install and test the native installer
-        run: '"$ACE_PYTHON" desktop/build_native.py --verify --node "$(command -v node)" --python-runtime "$(uv python find --managed-python 3.12)"'
+        run: '"$ACE_PYTHON" desktop/build_native.py --verify --python-runtime "$(uv python find --system --managed-python 3.12)"'
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.target }}

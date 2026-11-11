@@ -46,16 +46,17 @@ def stage(application, node, python):
         if license_path.is_file():
             shutil.copy2(license_path, runtime/'LICENSE-node.txt')
             break
-    base = Path(subprocess.check_output([str(python), '-c', 'import sys; print(sys.base_prefix)'], text=True).strip())
+    isolated_env = {key:value for key,value in os.environ.items() if key not in ('PYTHONHOME','PYTHONPATH','__PYVENV_LAUNCHER__','VIRTUAL_ENV')}
+    base = Path(subprocess.check_output([str(python), '-I', '-c', 'import sys; print(sys.base_prefix)'], text=True, env=isolated_env).strip())
     # uv's managed CPython distribution is relocatable on both macOS and Windows.
     shutil.copytree(base, runtime/'python', symlinks=os.name != 'nt',
                     ignore=shutil.ignore_patterns('__pycache__', '*.pyc', 'site-packages', 'test', 'tests'))
-    version = subprocess.check_output([str(python), '-c', 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'], text=True).strip()
+    version = subprocess.check_output([str(python), '-I', '-c', 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'], text=True, env=isolated_env).strip()
     site = ROOT/('.venv/Lib/site-packages' if os.name == 'nt' else f'.venv/lib/python{version}/site-packages')
     target = runtime/'python'/('Lib/site-packages' if os.name == 'nt' else f'lib/python{version}/site-packages')
     shutil.copytree(site, target, dirs_exist_ok=True, ignore=IGNORE)
     executable = runtime/'python'/('python.exe' if os.name == 'nt' else 'bin/python3')
-    run(executable, '-c', 'import sys,pathlib,pymupdf,PIL,docx,openpyxl,pptx; assert pathlib.Path(sys.prefix).resolve().is_relative_to(pathlib.Path(sys.argv[1]).resolve()); print("Relocated runtime OK")', runtime/'python')
+    run(executable, '-I', '-c', 'import sys,pathlib,pymupdf,PIL,docx,openpyxl,pptx; print("Runtime prefix:",sys.prefix); assert pathlib.Path(sys.prefix).resolve().is_relative_to(pathlib.Path(sys.argv[1]).resolve()); print("Relocated runtime OK")', runtime/'python', env=isolated_env)
     shutil.copy2(ROOT/'desktop/launcher.py', application/'launcher.py')
     for name in ('LICENSE', 'COPYRIGHT', 'THIRD_PARTY_NOTICES.md', 'README.md', 'VERIFICATION.md'):
         shutil.copy2(ROOT/name, application/name)
@@ -101,15 +102,15 @@ Name: desktopicon; Description: "Create a desktop shortcut"
 Source: "{application}\\*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{{group}}\\ACE Studio"; Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: """{{app}}\\launcher.py"""; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\app\\public\\icon.ico"
-Name: "{{group}}\\Stop ACE Studio"; Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: """{{app}}\\launcher.py"" --stop"; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\app\\public\\icon.ico"
-Name: "{{autodesktop}}\\ACE Studio"; Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: """{{app}}\\launcher.py"""; IconFilename: "{{app}}\\app\\public\\icon.ico"; Tasks: desktopicon
+Name: "{{group}}\\ACE Studio"; Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: "-I ""{{app}}\\launcher.py"""; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\app\\public\\icon.ico"
+Name: "{{group}}\\Stop ACE Studio"; Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: "-I ""{{app}}\\launcher.py"" --stop"; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\app\\public\\icon.ico"
+Name: "{{autodesktop}}\\ACE Studio"; Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: "-I ""{{app}}\\launcher.py"""; IconFilename: "{{app}}\\app\\public\\icon.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: """{{app}}\\launcher.py"""; Description: "Open ACE Studio"; Flags: nowait postinstall skipifsilent
+Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: "-I ""{{app}}\\launcher.py"""; Description: "Open ACE Studio"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: """{{app}}\\launcher.py"" --stop"; Flags: runhidden waituntilterminated skipifdoesntexist
+Filename: "{{app}}\\runtime\\python\\pythonw.exe"; Parameters: "-I ""{{app}}\\launcher.py"" --stop"; Flags: runhidden waituntilterminated skipifdoesntexist
 ''', encoding='utf-8-sig')
     compiler = shutil.which('ISCC') or str(Path(os.environ.get('ProgramFiles(x86)', 'C:/Program Files (x86)'))/'Inno Setup 6/ISCC.exe')
     run(compiler, script)

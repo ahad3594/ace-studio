@@ -14,11 +14,15 @@ int main(int argc, char **argv) {
     char *directory = dirname(resolved);
     if (snprintf(python, sizeof(python), "%s/../Resources/ace-studio/runtime/python/bin/python3", directory) >= sizeof(python)) return 1;
     if (snprintf(script, sizeof(script), "%s/../Resources/ace-studio/launcher.py", directory) >= sizeof(script)) return 1;
-    char **arguments = calloc((size_t)argc + 2, sizeof(char *));
+    char **arguments = calloc((size_t)argc + 3, sizeof(char *));
     if (!arguments) return 1;
     arguments[0] = python;
-    arguments[1] = script;
-    for (int i = 1; i < argc; ++i) arguments[i + 1] = argv[i];
+    arguments[1] = "-I";
+    arguments[2] = script;
+    for (int i = 1; i < argc; ++i) arguments[i + 2] = argv[i];
+    unsetenv("__PYVENV_LAUNCHER__");
+    unsetenv("PYTHONHOME");
+    unsetenv("PYTHONPATH");
     execv(python, arguments);
     perror("ACE Studio runtime");
     free(arguments);

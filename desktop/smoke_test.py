@@ -28,7 +28,7 @@ def main():
         env = {**os.environ, 'ACE_DESKTOP_CONFIG': str(profile / 'config'),
                'ACE_DESKTOP_STATE': str(state), 'ACE_SHORTCUT_DIR': str(profile / 'Desktop'),
                'ACE_NO_BROWSER': '1'}
-        launcher = ([str(python), str(root/'launcher.py')] if os.name == 'nt' else
+        launcher = ([str(python), '-I', str(root/'launcher.py')] if os.name == 'nt' else
                     [str(supplied/'Contents/MacOS/ACE Studio')] if supplied.suffix == '.app' else [str(root/'ace-studio')])
         try:
             subprocess.run(launcher, env=env, check=True, timeout=60)
