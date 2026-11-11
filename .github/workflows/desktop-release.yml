@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: desktop-release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   version:
@@ -106,10 +106,12 @@ jobs:
           arch=x86_64
           file_arch=x86-64
           if [[ "$(uname -m)" == arm64 ]]; then arch=aarch64; file_arch=aarch64; fi
-          curl -fL --retry 3 "https://download.documentfoundation.org/libreoffice/stable/26.2.7/mac/${arch}/LibreOffice_26.2.7_MacOS_${file_arch}.dmg" -o "$RUNNER_TEMP/LibreOffice.dmg"
+          curl -fL --connect-timeout 20 --max-time 180 --speed-time 45 --speed-limit 1024 "https://download.documentfoundation.org/libreoffice/stable/26.2.7/mac/${arch}/LibreOffice_26.2.7_MacOS_${file_arch}.dmg" -o "$RUNNER_TEMP/LibreOffice.dmg" || \
+            curl -fL --connect-timeout 20 --max-time 240 --speed-time 45 --speed-limit 1024 "https://dev-builds.libreoffice.org/pre-releases/mac/${arch}/LibreOffice_26.2.7.3_MacOS_${file_arch}.dmg" -o "$RUNNER_TEMP/LibreOffice.dmg"
           hdiutil attach -readonly -nobrowse -mountpoint "$RUNNER_TEMP/LibreOffice-mount" "$RUNNER_TEMP/LibreOffice.dmg"
           sudo ditto "$RUNNER_TEMP/LibreOffice-mount/LibreOffice.app" /Applications/LibreOffice.app
           hdiutil detach "$RUNNER_TEMP/LibreOffice-mount"
+          codesign --verify --deep --strict /Applications/LibreOffice.app
       - name: Install pinned application dependencies
         run: |
           npm ci
@@ -170,6 +172,7 @@ jobs:
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "ACE Studio $VERSION" --notes-file RELEASE_NOTES.md
           fi
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq .object.sha)" = "$GITHUB_SHA"
           gh release upload "$TAG" desktop-dist/* --clobber
           gh release view "$TAG" --json assets > /tmp/ace-assets.json
           python3 - <<'PY'

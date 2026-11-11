@@ -10,6 +10,7 @@ The source tree contains the code and native builders. **GitHub Releases** conta
 4. Wait for all native jobs and the publish job to succeed. Check every asset under **Releases → Assets** and verify checksums.
 
 Published versions are not overwritten. Use a new version for fixes. A failed attempt's draft can be completed on a retry.
+Newer commits cancel obsolete in-progress builds. A draft tag must match the publishing commit; the publisher refuses to mix a previous tag with new source. If an interrupted attempt left a draft for an older commit, prepare a new version or deliberately resolve that draft before retrying.
 
 ## Native build matrix
 
