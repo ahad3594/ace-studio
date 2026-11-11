@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['.github/workflows/repair-native-lock.yml']
+    paths: ['.github/workflows/repair-native-lock.yml', 'scripts/repair-native-lock.mjs']
 permissions:
   contents: write
 jobs:
@@ -17,25 +17,8 @@ jobs:
       - name: Restore all optional platform records without changing locked versions
         run: |
           set -euo pipefail
-          mkdir "$RUNNER_TEMP/ace-clean-lock"
-          cp package.json package-lock.json "$RUNNER_TEMP/ace-clean-lock/"
-          cd "$RUNNER_TEMP/ace-clean-lock"
-          npm install --package-lock-only --include=optional --ignore-scripts --no-audit --no-fund
-          cd "$GITHUB_WORKSPACE"
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          const old = JSON.parse(fs.readFileSync('package-lock.json'));
-          const repaired = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/ace-clean-lock/package-lock.json'));
-          for (const [name, data] of Object.entries(old.packages)) {
-            if (repaired.packages[name]?.version !== data.version) throw new Error('Unexpected dependency version change: '+name);
-          }
-          for (const platform of ['darwin-arm64','darwin-x64','win32-x64-msvc']) {
-            for (const name of ['lightningcss-'+platform,'@tailwindcss/oxide-'+platform,'@next/swc-'+platform]) {
-              if (!repaired.packages['node_modules/'+name]) throw new Error('Native package still missing: '+name);
-            }
-          }
-          fs.writeFileSync('package-lock.json', JSON.stringify(repaired,null,2)+'\n');
-          JS
+          node scripts/repair-native-lock.mjs
+          node scripts/repair-native-lock.mjs --check
           git diff --check
           if ! git diff --quiet -- package-lock.json; then
             git config user.name 'github-actions[bot]'
