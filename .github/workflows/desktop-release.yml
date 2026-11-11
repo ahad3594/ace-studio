@@ -131,7 +131,7 @@ jobs:
         env:
           PLAYWRIGHT_SERVER_COMMAND: npm run start
       - name: Build, install and test the native installer
-        run: python desktop/build_native.py --verify --node "$(command -v node)" --python-runtime "$(uv python find --managed-python 3.12)"
+        run: '"$ACE_PYTHON" desktop/build_native.py --verify --node "$(command -v node)" --python-runtime "$(uv python find --managed-python 3.12)"'
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.target }}

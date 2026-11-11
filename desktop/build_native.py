@@ -37,8 +37,8 @@ def stage(application, node, python):
     shutil.copytree(ROOT/'.next/standalone', application/'app', ignore=IGNORE)
     shutil.copytree(ROOT/'.next/static', application/'app/.next/static', dirs_exist_ok=True)
     shutil.copytree(ROOT/'public', application/'app/public', dirs_exist_ok=True)
-    shutil.copytree(ROOT/'worker', application/'app/worker', ignore=IGNORE)
-    shutil.copytree(ROOT/'data', application/'app/data')
+    shutil.copytree(ROOT/'worker', application/'app/worker', dirs_exist_ok=True, ignore=IGNORE)
+    shutil.copytree(ROOT/'data', application/'app/data', dirs_exist_ok=True)
     runtime = application/'runtime'
     runtime.mkdir()
     shutil.copy2(node, runtime/('node.exe' if os.name == 'nt' else 'node'))
