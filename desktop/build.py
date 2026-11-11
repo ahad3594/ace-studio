@@ -12,6 +12,8 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--node',default=os.environ.get('CODEX_PRIMARY_RUNTIME_NODE') or shutil.which('node'));parser.add_argument('--python-runtime',default=sys.base_prefix);parser.add_argument('--output',default=str(ROOT/'desktop-dist'));args=parser.parse_args()
     if platform.system()!='Linux' or platform.machine() not in ('x86_64','amd64'):raise SystemExit('This installer build targets Linux x64. Other platforms need a separate package build.')
     if not (ROOT/'.next/standalone/server.js').exists():raise SystemExit('Run npm run build first.')
+    version_string=json.loads((ROOT/'package.json').read_text())['version']
+    if not __import__('re').fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+',version_string):raise SystemExit('Package version must be major.minor.patch.')
     output=Path(args.output).resolve();output.mkdir(parents=True,exist_ok=True);build=ROOT/'.desktop-build';shutil.rmtree(build,ignore_errors=True)
     application=build/'opt/ace-studio';application.mkdir(parents=True)
     copy_tree(ROOT/'.next/standalone',application/'app',shutil.ignore_patterns('.env*'))
@@ -43,7 +45,7 @@ def main():
         if (python_root/license_name).is_file():shutil.copy2(python_root/license_name,py_target/license_name)
     shutil.copy2(ROOT/'desktop/launcher.py',application/'launcher.py');(application/'launcher.py').chmod(0o755)
     wrapper=application/'ace-studio';wrapper.write_text('#!/bin/sh\nexec python3 "$(dirname "$(readlink -f "$0")")/launcher.py" "$@"\n');wrapper.chmod(0o755)
-    for filename in ('README.md','VERIFICATION.md','THIRD_PARTY_NOTICES.md'):
+    for filename in ('README.md','VERIFICATION.md','THIRD_PARTY_NOTICES.md','LICENSE','COPYRIGHT'):
         if (ROOT/filename).exists():shutil.copy2(ROOT/filename,application/filename)
     # Include the complete authored source alongside the native runtime.
     with zipfile.ZipFile(application/'ACE_Studio_Source.zip','w',zipfile.ZIP_DEFLATED) as archive:
@@ -56,8 +58,8 @@ def main():
     icons=build/'usr/share/icons/hicolor';(icons/'512x512/apps').mkdir(parents=True);(icons/'scalable/apps').mkdir(parents=True);shutil.copy2(ROOT/'public/icon-512.png',icons/'512x512/apps/ace-studio.png');shutil.copy2(ROOT/'public/icon.svg',icons/'scalable/apps/ace-studio.svg')
     control=build/'DEBIAN';control.mkdir()
     installed=sum(p.stat().st_size for p in application.rglob('*') if p.is_file())//1024
-    (control/'control').write_text(f'Package: ace-studio\nVersion: 2.0.0\nSection: graphics\nPriority: optional\nArchitecture: amd64\nMaintainer: ACE Studio <191617298+ahad3594@users.noreply.github.com>\nDepends: python3, xdg-utils, libreoffice-writer, libreoffice-calc, libreoffice-impress, ghostscript, libc6 (>= 2.35), libstdc++6, libgcc-s1\nInstalled-Size: {installed}\nDescription: Private PDF, document and image workspace\n ACE Studio bundles a local web app, Node.js, a Python document engine,\n OCR language data and a desktop launcher. No terminal is needed to run it.\n')
-    package=output/'ACE-Studio_2.0.0_amd64.deb'
+    (control/'control').write_text(f'Package: ace-studio\nVersion: {version_string}\nSection: graphics\nPriority: optional\nArchitecture: amd64\nMaintainer: ACE Studio <191617298+ahad3594@users.noreply.github.com>\nDepends: python3, xdg-utils, libreoffice-writer, libreoffice-calc, libreoffice-impress, ghostscript, libc6 (>= 2.35), libstdc++6, libgcc-s1\nInstalled-Size: {installed}\nDescription: Private PDF, document and image workspace\n ACE Studio bundles a local web app, Node.js, a Python document engine,\n OCR language data and a desktop launcher. No terminal is needed to run it.\n')
+    package=output/f'ACE-Studio_{version_string}_amd64.deb'
     subprocess.run(['dpkg-deb','--root-owner-group','-Zxz','-z6','--build',str(build),str(package)],check=True)
     subprocess.run(['desktop-file-validate',str(desktop)],check=True)
     print(json.dumps({'installer':str(package),'bytes':package.stat().st_size,'stagedApp':str(application),'python':version}))

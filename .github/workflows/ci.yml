@@ -1,5 +1,7 @@
 name: Test ACE Studio
 on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-24.04

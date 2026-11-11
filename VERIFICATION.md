@@ -1,4 +1,12 @@
-# ACE Studio 2.0 verification
+# ACE Studio verification
+
+## Version 2.0.1 release checks
+
+The [Linux release workflow](https://github.com/ahad3594/ace-studio/actions/workflows/linux-installer.yml) publishes a release only after unit/API tests, the Python document suite, TypeScript, the production build, desktop/mobile Chromium workflows, Debian package installation, bundled-Python imports, local service startup, shortcut generation, service reuse and shutdown all succeed on an Ubuntu runner. Release assets include the installer, the exact source commit and SHA-256 checksums.
+
+These are headless automated checks. Ubuntu's graphical software-center flow, a physical desktop session, Windows/macOS, and live Gemini account requests are not exercised by that workflow. The Actions run for a particular release is the record of its actual result.
+
+## Historical version 2.0.0 local checks
 
 Verified on 10 November 2026 (Pakistan time). This file describes checks actually completed for this version.
 

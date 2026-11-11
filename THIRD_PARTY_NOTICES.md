@@ -1,5 +1,7 @@
 # Third-party notices
 
+ACE Studio authored code: Copyright (C) 2026 Malik Ahad and ACE Studio contributors. Licensed under GNU AGPL-3.0-only; see `LICENSE`.
+
 ACE Studio uses original application code and branding together with open-source software. The upstream projects retain their copyrights. Their licenses apply to the included components.
 
 | Component | License family | Upstream |

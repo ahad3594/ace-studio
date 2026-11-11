@@ -1,6 +1,6 @@
 {
   "name": "ace-studio",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -41,5 +41,14 @@
     "@types/react-dom": "^19.2.2",
     "@playwright/test": "^1.62.1",
     "tsx": "^4.20.6"
-  }
+  },
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ahad3594/ace-studio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ahad3594/ace-studio/issues"
+  },
+  "homepage": "https://github.com/ahad3594/ace-studio#readme"
 }

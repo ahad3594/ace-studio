@@ -2,6 +2,10 @@
 
 **Every file. One workspace.**
 
+[Download for Ubuntu / Linux Mint](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.0.1_amd64.deb) · [All releases](https://github.com/ahad3594/ace-studio/releases) · [Ubuntu installation help](docs/INSTALL_UBUNTU.md) · [Contribute](CONTRIBUTING.md)
+
+Open-source application under [GNU AGPL v3](LICENSE). The ready-to-install app supports **Ubuntu 22.04 or newer, Linux Mint 21 or newer, and compatible x86-64 Debian-based systems**. Windows, macOS and ARM installers are not available.
+
 ACE Studio is a desktop and web app for PDFs, Office documents and images. You can turn images into a PDF, turn a PDF into an editable Word file, export PDF pages as images, and use many other file tools. It also includes the original image resizing and compression studio.
 
 ACE has its own name, icon and interface. It is not an iLovePDF product and does not use iLovePDF's branding or private software.
@@ -10,12 +14,22 @@ ACE has its own name, icon and interface. It is not an iLovePDF product and does
 
 The supplied installer is for **64-bit Ubuntu, Linux Mint and compatible Debian-based Linux systems**. It is not a Windows or macOS installer.
 
-1. Download `ACE-Studio_2.0.0_amd64.deb`.
-2. Double-click the file and open it with your system's software installer.
+1. [Download `ACE-Studio_2.0.1_amd64.deb`](https://github.com/ahad3594/ace-studio/releases/latest/download/ACE-Studio_2.0.1_amd64.deb). On the [Releases page](https://github.com/ahad3594/ace-studio/releases), expand **Assets** and choose the `.deb` file. **Code → Download ZIP** downloads developer source code, not the installer.
+2. Open **Files → Downloads**, right-click the `.deb` file, and choose **Open With → Software Install / App Center**. Keep an internet connection available for missing system dependencies.
 3. Click **Install**. Your system may ask for your normal administrator password. LibreOffice and Ghostscript are installed as system dependencies if they are missing.
 4. Open your Applications menu, search for **ACE Studio**, and click it.
 5. ACE opens in your normal browser. Its server runs only on your computer at a local address.
 6. On the first launch, ACE also creates an **ACE Studio** shortcut on your desktop. If Linux asks, right-click the shortcut and choose **Allow Launching**.
+
+If your Ubuntu software installer cannot open local `.deb` files, open a terminal in the folder containing the download and run:
+
+```bash
+sudo apt install ./ACE-Studio_2.0.1_amd64.deb
+```
+
+Use `apt install` for a local file so Ubuntu installs required dependencies too. See the [Ubuntu installation guide](docs/INSTALL_UBUNTU.md) for checksums, updates, removal and troubleshooting.
+
+The `.deb`, matching source archive and `SHA256SUMS` are published together in **GitHub Releases**. Large built installers are kept there instead of in the source tree. Releases are built and checked by [the Linux installer workflow](.github/workflows/linux-installer.yml).
 
 After installation, you do **not** need to run npm, Python or terminal commands to open the app. The installer includes Node.js, the Python document engine, fonts, the ACE icon and English/German/Urdu OCR data. It needs about 1 GB of free disk space after installation.
 
@@ -209,4 +223,10 @@ data/                 Bundled OCR models, fonts and their notices
 tests/                Real-file tests and browser tests
 ```
 
-Third-party libraries have their own licenses. In particular, PyMuPDF is available under AGPL or an Artifex commercial license. Review [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistributing or publicly hosting a modified version.
+## Open source and contributions
+
+ACE Studio's authored code is licensed under **GNU AGPL-3.0-only**; see [LICENSE](LICENSE) and [COPYRIGHT](COPYRIGHT). You can inspect, use, modify and redistribute it under that license. Modified network deployments must provide the corresponding source as the AGPL requires.
+
+Third-party components retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Gemini is an optional external service and uses each user's own key and account limits. Core local file tools do not require a Gemini key.
+
+For bugs and feature requests, [open a GitHub issue](https://github.com/ahad3594/ace-studio/issues). See [CONTRIBUTING.md](CONTRIBUTING.md) for development and [the release guide](docs/RELEASING.md) for publishing installers. Please do not upload private documents or API keys into issues.
