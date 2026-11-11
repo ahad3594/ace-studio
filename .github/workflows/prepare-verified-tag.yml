@@ -35,6 +35,5 @@ jobs:
           if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" > /tmp/ace-verified-tag.json 2>/dev/null; then
             test "$(python3 -c 'import json; print(json.load(open("/tmp/ace-verified-tag.json"))["object"]["sha"])')" = "$VERIFIED_SHA"
           else
-            git tag "$tag" "$VERIFIED_SHA"
-            git push origin "refs/tags/$tag"
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$tag" -f "sha=$VERIFIED_SHA"
           fi
