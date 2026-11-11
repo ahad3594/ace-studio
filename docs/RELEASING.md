@@ -18,7 +18,7 @@ Published versions are not overwritten. Use a new version for fixes. A failed at
 | Ubuntu 22.04 x64 | `_amd64.deb` | Install with apt, then test bundled runtime |
 | Windows Server 2022 x64 | `_windows_x64_setup.exe` | Silent per-user installation, Start Menu shortcut, runtime, uninstall |
 | macOS 15 Intel | `_macos_x64.dmg` | Mount, copy app into a path with spaces, test native entry point |
-| macOS 14 Apple Silicon | `_macos_arm64.dmg` | Same checks on native ARM hardware |
+| macOS 15 Apple Silicon | `_macos_arm64.dmg` | Same checks on native ARM hardware |
 
 Each job runs launcher tests, unit/API tests, the document suite, TypeScript and the production build. Installed-app checks verify imports from the relocated runtime, actual PDF inspection through the server, authenticated local service reuse and shutdown. Linux also checks desktop/mobile Chromium workflows.
 

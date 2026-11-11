@@ -51,7 +51,7 @@ def srgb_profile(executable=None):
     candidates = []
     if executable:
         prefix = Path(executable).resolve().parent.parent
-        candidates += [prefix/'iccprofiles/srgb.icc']
+        candidates += [prefix/'iccprofiles/srgb.icc', prefix/'share/ghostscript/iccprofiles/srgb.icc']
         candidates += sorted((prefix/'share/ghostscript').glob('*/iccprofiles/srgb.icc'), reverse=True)
     candidates.append(Path('/usr/share/color/icc/ghostscript/srgb.icc'))
     return first_file(candidates)

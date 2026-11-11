@@ -2,7 +2,7 @@
 
 ## Version 2.1.0 native platform checks
 
-The [desktop release workflow](https://github.com/ahad3594/ace-studio/actions/workflows/desktop-release.yml) builds on Ubuntu 22.04 x64, Windows Server 2022 x64, macOS 15 Intel and macOS 14 Apple Silicon. Each platform runs launcher tests, unit/API tests, document tests, TypeScript and a production build. The installer is then installed or its DMG mounted/copied, and the relocated runtime, authenticated local service, actual PDF inspection, service reuse and shutdown are checked. Linux also runs desktop/mobile Chromium browser tests. Publication requires every native build to pass.
+The [desktop release workflow](https://github.com/ahad3594/ace-studio/actions/workflows/desktop-release.yml) builds on Ubuntu 22.04 x64, Windows Server 2022 x64, macOS 15 Intel and macOS 15 Apple Silicon. Each platform runs launcher tests, unit/API tests, document tests, TypeScript and a production build. The installer is then installed or its DMG mounted/copied, and the relocated runtime, authenticated local service, actual PDF inspection, service reuse and shutdown are checked. Linux also runs desktop/mobile Chromium browser tests. Publication requires every native build to pass.
 
 Windows installers do not have an Authenticode publisher certificate. Mac bundles use ad-hoc signatures and are not notarized or Developer ID signed. A graphical first-launch/OS approval flow and live Gemini requests are separate from the headless checks. See the Actions run for the exact release result.
 

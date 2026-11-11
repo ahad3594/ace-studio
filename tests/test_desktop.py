@@ -51,7 +51,19 @@ class DesktopTests(unittest.TestCase):
             profile.parent.mkdir()
             profile.touch()
             with patch.dict(os.environ, {}, clear=True):
-                self.assertEqual(Path(platform_tools.srgb_profile(executable)), profile)
+                self.assertTrue(Path(platform_tools.srgb_profile(executable)).samefile(profile))
+
+    def test_unversioned_ghostscript_profile(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            prefix = Path(temporary)
+            executable = prefix/'bin/gs'
+            executable.parent.mkdir()
+            executable.touch()
+            profile = prefix/'share/ghostscript/iccprofiles/srgb.icc'
+            profile.parent.mkdir(parents=True)
+            profile.touch()
+            with patch.dict(os.environ, {}, clear=True):
+                self.assertTrue(Path(platform_tools.srgb_profile(executable)).samefile(profile))
 
 
 if __name__ == '__main__':

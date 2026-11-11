@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [package.json]
+    paths: [package.json, '.github/workflows/desktop-release.yml', 'desktop/**', 'worker/platform_tools.py']
     tags: ['v*']
 
 permissions:
@@ -63,7 +63,7 @@ jobs:
           - os: macos-15-intel
             target: macos-x64
             python: .venv/bin/python
-          - os: macos-14
+          - os: macos-15
             target: macos-arm64
             python: .venv/bin/python
     runs-on: ${{ matrix.os }}
@@ -102,7 +102,14 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install ghostscript
-          brew install --cask libreoffice
+          # Pin an official stable download: cached Homebrew casks can point at removed mirrors.
+          arch=x86_64
+          file_arch=x86-64
+          if [[ "$(uname -m)" == arm64 ]]; then arch=aarch64; file_arch=aarch64; fi
+          curl -fL --retry 3 "https://download.documentfoundation.org/libreoffice/stable/26.2.7/mac/${arch}/LibreOffice_26.2.7_MacOS_${file_arch}.dmg" -o "$RUNNER_TEMP/LibreOffice.dmg"
+          hdiutil attach -readonly -nobrowse -mountpoint "$RUNNER_TEMP/LibreOffice-mount" "$RUNNER_TEMP/LibreOffice.dmg"
+          sudo ditto "$RUNNER_TEMP/LibreOffice-mount/LibreOffice.app" /Applications/LibreOffice.app
+          hdiutil detach "$RUNNER_TEMP/LibreOffice-mount"
       - name: Install pinned application dependencies
         run: |
           npm ci
